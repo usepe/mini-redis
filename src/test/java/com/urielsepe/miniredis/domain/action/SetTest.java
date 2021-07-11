@@ -1,45 +1,68 @@
 package com.urielsepe.miniredis.domain.action;
 
+import com.urielsepe.miniredis.domain.infrastructure.InMemoryRepository;
+import com.urielsepe.miniredis.domain.infrastructure.MockClock;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-/**
- * Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
- * Any previous time to live associated with the key is discarded on successful SET operation.
- */
+import java.time.Instant;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
+
 public class SetTest {
     @Test
     void testSetWithAnEmptyKeyShouldFail() {
-        Set set = new Set();
+        Instant now = Instant.now();
+        MockClock clock = new MockClock(now);
+        InMemoryRepository repository = new InMemoryRepository(clock);
+        Set set = new Set(repository);
 
         Assertions.assertThrows(IllegalArgumentException.class, () -> set.call("", "", null));
     }
 
     @Test
     void testSetWithANonEmptyKeyButWithoutAValueShouldFail() {
-        Set set = new Set();
+        Instant now = Instant.now();
+        MockClock clock = new MockClock(now);
+        InMemoryRepository repository = new InMemoryRepository(clock);
+        Set set = new Set(repository);
 
         Assertions.assertThrows(IllegalArgumentException.class, () -> set.call("MY_KEY", "", null));
     }
 
     @Test
     void testSetWithANonEmptyKeyValueButWithAZeroExpirationSeconds() {
-        Set set = new Set();
+        Instant now = Instant.now();
+        MockClock clock = new MockClock(now);
+        InMemoryRepository repository = new InMemoryRepository(clock);
+        Set set = new Set(repository);
 
         Assertions.assertThrows(IllegalArgumentException.class, () -> set.call("MY_KEY", "stored value", 0));
     }
 
     @Test
     void testSetWithValidKeyAndValueShouldSucceed() {
-        Set set = new Set();
+        Instant now = Instant.now();
+        MockClock clock = new MockClock(now);
+        InMemoryRepository repository = new InMemoryRepository(clock);
+        Set set = new Set(repository);
 
-        Assertions.assertTrue(set.call("MY_KEY", "stored_value", null));
+        set.call("MY_KEY", "stored_value", null);
+
+        Assertions.assertEquals( "stored_value", repository.get("MY_KEY"));
     }
 
     @Test
     void testSetWithValidKeyValueAndExpirationShouldSucceed() {
-        Set set = new Set();
+        Instant now = Instant.now();
+        MockClock clock = new MockClock(now);
+        InMemoryRepository repository = new InMemoryRepository(clock);
+        Set set = new Set(repository);
 
-        Assertions.assertTrue(set.call("MY_KEY", "stored_value", 10));
+        set.call("MY_KEY", "stored_value", 10);
+
+        Assertions.assertEquals("stored_value", repository.get("MY_KEY"));
     }
 }
